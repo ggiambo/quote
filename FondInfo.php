@@ -62,7 +62,8 @@ class FondInfo
         $dom->loadStr($response);
 
         $children = $dom->find(".pricebox > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(1) > th:nth-child(1)");
-        $this->quote = $children[0]->text;
+        $fmt = numfmt_create( 'de_CH', NumberFormatter::DECIMAL );
+        $this->quote = numfmt_parse($fmt, $children[0]->text);
     }
 
 }

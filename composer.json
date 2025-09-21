@@ -4,7 +4,8 @@
     "php-http/curl-client": "*",
     "ext-curl": "*",
     "ext-json": "*",
-    "http-interop/http-factory-guzzle": "^1.2"
+    "http-interop/http-factory-guzzle": "^1.2",
+    "ext-intl": "*"
   },
   "config": {
     "allow-plugins": {
