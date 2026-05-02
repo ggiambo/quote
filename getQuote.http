@@ -1,0 +1,5 @@
+POST https://www.finanzen.ch/ajax/SearchController_SuggestJson
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:150.0) Gecko/20100101 Firefox/150.0
+Content-Type: application/json
+
+{"query": "ch0002789847"}
