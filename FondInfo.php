@@ -5,65 +5,38 @@ use PHPHtmlParser\Dom;
 
 class FondInfo
 {
-
-    public $id;
+    private $fmt;
     public $isin;
     public $name;
-    public $url;
     public $quote;
 
-    public function loadFundInfo($fondId)
+    function __construct()
     {
-        $this->pupulateFundInfo($fondId);
-        $this->populateFundQuote();
+        $this->fmt = numfmt_create("de_CH", NumberFormatter::DECIMAL);
     }
 
-    private function pupulateFundInfo($fondId)
+    public function loadFundInfo($isin)
     {
-        $curlHandle = curl_init("https://www.finanzen.ch/ajax/SearchController_SuggestJson");
-        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array("Content-Type: application/json",));
-        curl_setopt($curlHandle, CURLOPT_HEADER, true);
-        curl_setopt($curlHandle, CURLOPT_POST, true);
-        curl_setopt($curlHandle, CURLOPT_POSTFIELDS, json_encode(array("query" => $fondId)));
+        $fmt = numfmt_create("de_CH", NumberFormatter::DECIMAL);
+        define("STDOUT", fopen("php://stdout", "wb"));
+
+        $curlHandle = curl_init("https://www.finanzpartner.de/fi/$isin");
+
+        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, [
+            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/142.0",
+        ]);
         curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curlHandle, CURLOPT_ENCODING, 'gzip');
-
-        $response = curl_exec($curlHandle);
-
-        $headerSize = curl_getinfo($curlHandle, CURLINFO_HEADER_SIZE);
-        $body = substr($response, $headerSize);
-        curl_close($curlHandle);
-
-        $json = json_decode($body)->{"it"};
-        $fonds = array_values(array_filter($json, function ($item) {
-                return $item->{"n"} === "Fonds";
-            })
-        );
-
-        $fond = $fonds[0]->{"il"}[0];
-        $this->id = $fond->{"id"};
-        $this->isin = $fond->{"isin"};
-        $this->name = $fond->{"n"};
-        $this->url = $fond->{"u"};
-    }
-
-    private function populateFundQuote()
-    {
-        $curlHandle = curl_init($this->url);
-        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/142.0"));
-        curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curlHandle, CURLOPT_ENCODING, 'gzip');
+        curl_setopt($curlHandle, CURLOPT_ENCODING, "gzip");
 
         $response = curl_exec($curlHandle);
 
         curl_close($curlHandle);
 
-        $dom = new Dom;
+        $dom = new Dom();
         $dom->loadStr($response);
 
-        $children = $dom->find(".pricebox > thead:nth-child(1) > tr:nth-child(1) > th:nth-child(1) > th:nth-child(1)");
-        $fmt = numfmt_create( 'de_CH', NumberFormatter::DECIMAL );
-        $this->quote = numfmt_parse($fmt, $children[0]->text);
+        $this->isin = $isin;
+        $this->name = $dom->find("h1")[0]->text;
+        $this->quote = numfmt_parse($fmt, $dom->find("span.kurs,span.kurs-m,span.kurs-s")[0]->text);
     }
-
 }
